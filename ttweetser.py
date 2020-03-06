@@ -3,6 +3,7 @@
 #Disclaimer / citation: The class textbook templates were referenced.
 
 from socket import *
+from _thread import start_new_thread
 import sys
 
 onlineUsers = []
@@ -38,32 +39,48 @@ def exitGracefully(errorType):
     sys.exit()
 
 #processes the client's requests
-#The first message received from the client
-#always indicated the request type.
-#If a second message is sent, it contains
-#data.
-def processClientRequests():
-    request_type = connectionSocket.recv(1024).decode()
+#The first 10 characters are reserved to
+#indicate the request type; the 10th char
+#onwards contains the actual client message
+def processClientRequests(data):
     print("req recevd")
-    if request_type == "check_username":
-        username = connectionSocket.recv(1024).decode()
+    request_type = data[:10] #first 10 characters reserved for request type
+    message = data[10:] #10th character onwards is the actual client data
+    if request_type == "check_user":
+        username = message
         response = loginUserIfValid(username)
-        connectionSocket.send(response.encode())
         print("user check")
-    elif request_type == "logout":
-        username = connectionSocket.recv(1024).decode()
-        onlineUsers.remove(username)
-        response = "removed"
-        connectionSocket.send(response.encode())
-        connectionSocket.close()
-        print("logout")
-        print(onlineUsers)
+        return response
+    elif request_type == "logout....":
+        username = message
+        try:
+            onlineUsers.remove(username)
+        except:
+            pass
+        response = "logged_out"
+        return response
     else:
-        response = "what"
-        connectionSocket.send(response.encode())
+        response = "what" #change
+    return response
 
+#creates a thread for the new client trying to log in
+def client_thread(connectionSocket):
+    connected = True
+    while connected:
+        data = connectionSocket.recv(1024)
+        data = data.decode()
+        if not data:
+            break
+        reply = processClientRequests(data)
+        if reply == 'logged_out': 
+            connectionSocket.close()
+            connected = False
+        else:
+            connectionSocket.sendall(reply.encode())
 
-
+#------------------------------
+#-----MAIN SERVER CODE---------
+#------------------------------
 #command line arg parsing and error checks
 if not len(sys.argv) == 2:
     exitGracefully(1)
@@ -77,22 +94,14 @@ serverPort = int(portArg)
 serverSocket = socket(AF_INET, SOCK_STREAM)
 #binding server socket to localhost and the user-inputted port
 serverSocket.bind(('', serverPort))
-serverSocket.listen(1)
+serverSocket.listen()
 print('The server is ready to receive...')
 
 #This loop keeps the server live for continous listening.
 while True:
+    #blocking call, waits to accept a connection
     connectionSocket, addr = serverSocket.accept()
+    #opens a connection for the new client
+    start_new_thread(client_thread, (connectionSocket,))
 
-    processClientRequests()
-    request_type = connectionSocket.recv(1024).decode()
-    if request_type == "logout":
-        username = connectionSocket.recv(1024).decode()
-        onlineUsers.remove(username)
-        response = "removed"
-        connectionSocket.send(response.encode())
-        connectionSocket.close()
-        print("logout")
-        print(onlineUsers)
-
-    
+serverSocket.close()

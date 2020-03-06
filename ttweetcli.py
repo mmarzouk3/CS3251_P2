@@ -6,8 +6,8 @@ from socket import *
 import sys
 import time
 
-#client changes this to true when they want to close the conxn
-clientTerminatesConxn = False 
+#client changes this to False when they want to close the conxn
+connected = True 
 
 #Basic error checking; change as needed
 #prints an error message and exits gracefully
@@ -29,35 +29,33 @@ def checkPortValid(input_):
 
 #logs in the user
 def login(username):
-    request_type = "check_username"
-    clientSocket.send(request_type.encode()) #it's a check username request
-    #wait 1/100th of second (give the server time to process the first message)
-    time.sleep(0.01) 
-    clientSocket.send(username.encode()) #send username of user to check
+    #the message contains the request type + the client's username to be checked
+    message = "check_user" + username
+    clientSocket.send(message.encode()) 
+
     #receive response from server
     response = clientSocket.recv(1024)
     response = response.decode()
     if response == "invalid":
-        print("error: username has wrong format, connection refused.")
+        #the username is already taken; inform the user
+        print("username illegal, connection refused.")
     if response == "valid":
         print("username legal, connection established.")
 
 #logs out the user
 def logout(username):
-    request_type = "logout"
-    clientSocket.send(request_type.encode()) #it's a logout request
-    #wait 1/100th of second (give the server time to process the first message)
-    time.sleep(0.01) 
-    clientSocket.send(username.encode()) #send username of user to log out
-    #clientSocket.close()
-    clientTerminatesConxn == True
+    message = "logout...." + username
+    clientSocket.send(message.encode()) #it's a logout request
+    
+    clientSocket.close()
+    connected == False
     print("bye bye")
     sys.exit()
 
 #listens for commands from the user
 #"pass" is just there temporarily until functionality is implemented
 def listen():
-    while not clientTerminatesConxn:
+    while connected:
         command = input()
         if command == "exit":
             logout(username)
@@ -76,7 +74,9 @@ def listen():
         else:
             print("Not a recognized command. Try again.")
 
-
+#------------------------------
+#-----MAIN CLIENT CODE---------
+#------------------------------
 #parsing command args and checking for validity
 if not len(sys.argv) == 4:
     exitGracefully(1)
@@ -93,13 +93,13 @@ clientSocket = socket(AF_INET, SOCK_STREAM)
 #with the ip address, server port, or both. Inform the 
 #user and exit gracefully.
 
-#try:
-clientSocket.connect((serverIP, serverPort))
-login(username)
+try:
+    clientSocket.connect((serverIP, serverPort))
+    login(username)
+    #listens for commands typed in by the user
+    listen()
 
-listen()
-
-#except:
-    #print("oops")
+except:
+    print("oops")
     #exitGracefully(4)
 
