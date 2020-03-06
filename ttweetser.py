@@ -43,13 +43,12 @@ def exitGracefully(errorType):
 #indicate the request type; the 10th char
 #onwards contains the actual client message
 def processClientRequests(data):
-    print("req recevd")
     request_type = data[:10] #first 10 characters reserved for request type
     message = data[10:] #10th character onwards is the actual client data
     if request_type == "check_user":
         username = message
         response = loginUserIfValid(username)
-        print("user check")
+        print("user check") #delete later
         return response
     elif request_type == "logout....":
         username = message
