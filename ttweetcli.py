@@ -9,15 +9,66 @@ import time
 #client changes this to False when they want to close the conxn
 connected = True 
 
-#Basic error checking; change as needed
 #prints an error message and exits gracefully
-#type 1 error is an argument format error
-def exitGracefully(errorType):
+#errorType is the error code, the data field is optional
+def exitGracefully(errorType, data = ''):
+    #invalid IP addr
     if errorType == 1:
-        print("Invalid command format. Try again.\n\n"
-              "Acceptable command formats are:\n"
-              "$ python3 ttweetcli.py <ServerIP> <ServerPort> <Username>\n")
+        print("error: server ip invalid, connection refused.")
+    #invalid port
+    elif errorType == 2:
+        print("error: server port invalid, connection refused.")
+    #invalid username
+    elif errorType == 3:
+        print("error: username has wrong format, connection refused.")
+    #user already logged in
+    elif errorType == 4:
+        print("username illegal, connection refused.")
+    #Wrong number of parameters
+    elif errorType == 5:
+        print("error: args should contain <ServerIP> <ServerPort> <Username>")
+    #Illegal message length(>150)
+    elif errorType == 6:
+        print("message length illegal, connection refused.")
+    #Illegal message length(=0 or None)
+    elif errorType == 7:
+        print("message format illegal.")
+    #Illegal hashtag
+    elif errorType == 8:
+        print("hashtag illegal format, connection refused.")
+    #Maximum hashtags reached
+    elif errorType == 9:
+        print("operation failed: sub <" + data + "> failed, already exists or exceeds 3 limitation")
+    else:
+        pass #remove later
     sys.exit()
+
+#checks that the first command from the user has valid args
+def checkInput(serverIP, serverPort, username):
+    ### Check the server IP addr
+    octets = serverIP.split('.')
+    if len(octets) == 4:
+        for i in octets:
+            #ip octet out of range
+            if int(i) < 0 or int(i) > 255:
+                exitGracefully(1)
+    else:
+        exitGracefully(1)
+    ###
+    ### Check the server port
+    try:
+        port = int(serverPort)
+    except:
+        exitGracefully(2)
+    if port < 1024 or port > 65535:
+        exitGracefully(2)
+    ###
+    ### Check the username
+    #checks that the username is an alphanumeric string
+    if not username.isalnum():
+        exitGracefully(3)
+
+    return serverIP, port, username
 
 #checks if the port is valid
 def checkPortValid(input_):
@@ -37,8 +88,8 @@ def login(username):
     response = clientSocket.recv(1024)
     response = response.decode()
     if response == "invalid":
-        #the username is already taken; inform the user
-        print("username illegal, connection refused.")
+        #the username is already taken; inform the user and exit
+        exitGracefully(4)
     if response == "valid":
         print("username legal, connection established.")
 
@@ -79,12 +130,13 @@ def listen():
 #------------------------------
 #parsing command args and checking for validity
 if not len(sys.argv) == 4:
-    exitGracefully(1)
+    exitGracefully(5)
 else:
     #args need to be checked
-    serverIP = sys.argv[1]
-    serverPort = checkPortValid(sys.argv[2])
-    username = sys.argv[3]
+    #serverIP = sys.argv[1]
+    #serverPort = checkPortValid(sys.argv[2])
+    #username = sys.argv[3]
+    serverIP, serverPort, username = checkInput(sys.argv[1], sys.argv[2], sys.argv[3])
 
 #This line creates the client socket for the TCP connection.
 clientSocket = socket(AF_INET, SOCK_STREAM)
@@ -100,7 +152,7 @@ try:
     listen()
 
 except:
+    #print("oops") #remove later
     pass
-    #print("oops")
-    #exitGracefully(4)
+
 
