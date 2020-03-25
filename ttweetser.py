@@ -6,7 +6,14 @@ from socket import *
 from _thread import start_new_thread
 import sys
 
+from user import User
+from messages import Message
+
+# list of User objects
 onlineUsers = []
+
+# list of Message Objects
+tweets = []
 
 #checks whether user input is valid
 def checkInput(input_):
@@ -17,7 +24,7 @@ def checkInput(input_):
 #checks whether the username is valid (i.e. not taken)
 def notTaken(username):
     for user in onlineUsers:
-        if username == user:
+        if username == user.username:
             return False
     return True
 
@@ -25,7 +32,7 @@ def notTaken(username):
 def loginUserIfValid(username):
     #add it to the list of online users if the username is valid
     if notTaken(username):
-        onlineUsers.append(username)
+        onlineUsers.append(User(username))
         response = "valid"
     else:
         response = "invalid"
@@ -53,7 +60,10 @@ def processClientRequests(data):
     elif request_type == "logout....":
         username = message
         try:
-            onlineUsers.remove(username)
+            for user in onlineUsers:
+                if user.get_username = username:
+                        break
+            onlineUsers.remove(user)
         except:
             pass
         response = "logged_out"
@@ -71,7 +81,7 @@ def client_thread(connectionSocket):
         if not data:
             break
         reply = processClientRequests(data)
-        if reply == 'logged_out': 
+        if reply == 'logged_out':
             connectionSocket.close()
             connected = False
         else:
@@ -87,7 +97,7 @@ else:
     portArg = sys.argv[1]
     checkInput(portArg)
 
-serverPort = int(portArg) 
+serverPort = int(portArg)
 
 #This creates the server socket for the TCP connection.
 serverSocket = socket(AF_INET, SOCK_STREAM)
