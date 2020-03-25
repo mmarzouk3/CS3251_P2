@@ -6,7 +6,7 @@ from socket import *
 from _thread import start_new_thread
 import sys
 
-from user import User
+from users import User
 from messages import Message
 
 # list of User objects
@@ -61,7 +61,7 @@ def processClientRequests(data):
         username = message
         try:
             for user in onlineUsers:
-                if user.get_username = username:
+                if user.get_username == username:
                         break
             onlineUsers.remove(user)
         except:
