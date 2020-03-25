@@ -6,8 +6,12 @@ from socket import *
 import sys
 import time
 
+from users import User
+from messages import Message
+
 #client changes this to False when they want to close the conxn
-connected = True 
+global connected
+
 
 #prints an error message and exits gracefully
 #errorType is the error code, the data field is optional
@@ -38,7 +42,7 @@ def exitGracefully(errorType, data = ''):
         print("hashtag illegal format, connection refused.")
     #Maximum hashtags reached
     elif errorType == 9:
-        print("operation failed: sub <" + data + "> failed, already exists or exceeds 3 limitation")
+        print(data) #print error msg sent from server
     else:
         pass #remove later
     sys.exit()
@@ -91,7 +95,13 @@ def login(username):
         #the username is already taken; inform the user and exit
         exitGracefully(4)
     if response == "valid":
+        user = User(username)
         print("username legal, connection established.")
+
+def sendTweet(userInput):
+    message = "tweet....." + username + userInput
+    clientSocket.send(message.encode())
+    
 
 #logs out the user
 def logout(username):
@@ -107,20 +117,20 @@ def logout(username):
 #"pass" is just there temporarily until functionality is implemented
 def listen():
     while connected:
-        command = input()
-        if command == "exit":
+        userInput = input()
+        if userInput == "exit":
             logout(username)
-        elif command == "tweet":
+        elif userInput[:5] == "tweet":
+            sendTweet(userInput[5:])
+        elif userInput == "subscribe":
             pass
-        elif command == "subscribe":
+        elif userInput == "unsubscribe":
             pass
-        elif command == "unsubscribe":
+        elif userInput == "timeline":
             pass
-        elif command == "timeline":
+        elif userInput == "getusers":
             pass
-        elif command == "getusers":
-            pass
-        elif command == "gettweets":
+        elif userInput == "gettweets":
             pass
         else:
             print("Not a recognized command. Try again.")
@@ -145,14 +155,15 @@ clientSocket = socket(AF_INET, SOCK_STREAM)
 #with the ip address, server port, or both. Inform the 
 #user and exit gracefully.
 
-try:
-    clientSocket.connect((serverIP, serverPort))
-    login(username)
-    #listens for commands typed in by the user
-    listen()
+#try:
+connected = True
+clientSocket.connect((serverIP, serverPort))
+login(username)
+#listens for commands typed in by the user
+listen()
 
-except:
+#except:
     #print("oops") #remove later
-    pass
+    #pass
 
 

@@ -7,16 +7,16 @@ class Message:
         self.hashtags = hashtags
 
     # This function checks whether or a string tag exists in our hashtags list for the message
-    def check_tag_exists(tag):
+    def check_tag_exists(self, tag):
         return tag in self.hashtags
 
     # Once again, just get function, we can keep them or delete them
 
-    def get_tweet():
+    def get_tweet(self):
         return self.tweet
 
-    def get_username():
+    def get_username(self):
         return self.username
 
-    def get_hashtags():
+    def get_hashtags(self):
         return self.hashtags

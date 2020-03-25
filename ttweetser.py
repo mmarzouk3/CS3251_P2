@@ -45,6 +45,52 @@ def exitGracefully(errorType):
         #print message
     sys.exit()
 
+#delete the user account and all associated messages
+def deleteUser(username):
+    try:
+        for user in onlineUsers:
+            if user.get_username() == username:
+                break
+        onlineUsers.remove(user)
+        print("users online: " + str(len(onlineUsers))) #delete later
+        ##
+        ##
+        #TODO: remove this user's messages from tweets list
+        ##
+        ##
+        ##
+    except:
+        print("oops")
+        pass
+
+#parses the tweet information from the user and stores it
+def tweet(userInput):
+    startIndex = userInput.find('\"') #the starting index of the tweet message
+    startIndexHash = userInput.find('#') #the starting index of the hashtags
+    username = userInput[:startIndex - 1]
+    if startIndex != -1: #i.e. if the first quote was found
+        endIndex = userInput.find('\"', startIndex + 1)
+        if startIndex != -1 and endIndex != -1: #i.e. both quotes were found
+            tweetMessage = userInput[startIndex + 1: endIndex]
+            if len(tweetMessage) < 1 or len(tweetMessage) > 150:
+                return "message length illegal, connection refused."
+            else:
+                if startIndexHash != -1: #hashtags found
+                    hashtags = userInput[startIndexHash + 1:]
+                    hashtagList = hashtags.split("#")
+                    for hashtag in hashtagList:
+                        if not hashtag.isalnum() or len(hashtag) < 1:
+                            return "hashtag illegal format, connection refused."
+                    else:
+                        #Store message in the user's profile
+                        userMessage = Message(tweetMessage, username, hashtagList)
+                        for user in onlineUsers:
+                            if user.get_username() == username:
+                                user.add_tweets(userMessage)
+
+                        #Store tweet
+                        tweets.append(userMessage)
+
 #processes the client's requests
 #The first 10 characters are reserved to
 #indicate the request type; the 10th char
@@ -52,22 +98,18 @@ def exitGracefully(errorType):
 def processClientRequests(data):
     request_type = data[:10] #first 10 characters reserved for request type
     message = data[10:] #10th character onwards is the actual client data
+    print(request_type + message) #delete later
     if request_type == "check_user":
         username = message
         response = loginUserIfValid(username)
-        print("user check") #delete later
         return response
     elif request_type == "logout....":
         username = message
-        try:
-            for user in onlineUsers:
-                if user.get_username == username:
-                        break
-            onlineUsers.remove(user)
-        except:
-            pass
+        deleteUser(username)
         response = "logged_out"
         return response
+    elif request_type == "tweet.....":
+        response = tweet(message)
     else:
         response = "what" #change
     return response
@@ -85,7 +127,8 @@ def client_thread(connectionSocket):
             connectionSocket.close()
             connected = False
         else:
-            connectionSocket.sendall(reply.encode())
+            if reply:
+                connectionSocket.sendall(reply.encode())
 
 #------------------------------
 #-----MAIN SERVER CODE---------

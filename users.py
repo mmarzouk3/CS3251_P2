@@ -11,34 +11,35 @@ class User:
 
     # This function takes in a string tag and subscribes the user to the hastag
     # if their hastag subscribe has not hit 3 yet
-    def subscribe_hashtag(tag):
+    def subscribe_hashtag(self, tag):
         if len(self.sub_hashtag < 3):
-            self.sub_hashtag.add(tag)
-            return "You've successfully subcribed!"
+            if not tag in self.sub_hashtag:
+                self.sub_hashtag.add(tag)
+                return "operation success" #message as per pdf guidelines
         else:
-            return "You already are subscribed to three hashtags"
+            return "operation failed: sub " +  tag + " failed, already exists or exceeds 3 limitation"
 
     # This function takes in a string tag and removes it from the user's
     # subscribed hashtags
-    def remove_hashtag(tag):
+    def remove_hashtag(self, tag):
         if tag in sub_hashtag:
             self.sub_hashtag.remove()
-            return "You've successfully remove the tag!"
+            return "operation success"
         else:
-            return "You are not subscribed to this hashtag"
+            return "You are not subscribed to this hashtag bub"
 
     # Make sure that everything in tweet is of object Message
     # This function will add a single Message object to the list of Messages
-    def add_tweets(tweet):
-        self.messages.add(tweet)
+    def add_tweets(self, tweet):
+        self.messages.append(tweet)
 
     #Get functions or we can delete this and just use the attributes either is fine
-    def get_username():
+    def get_username(self):
         return self.username
 
-    def get_subhashtasg():
+    def get_subhashtasg(self):
         return self.sub_hashtag
 
-    def get_messages():
+    def get_messages(self):
         return self.get_messages
 
