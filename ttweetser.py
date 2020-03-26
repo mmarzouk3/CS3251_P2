@@ -61,6 +61,12 @@ def deleteUser(username):
         print("oops")
         pass
 
+def sendUserList():
+    response = ''
+    for user in onlineUsers:
+        response += str(user.get_username()) + " " #usernames separated by spaces
+    return response
+
 #parses the tweet information from the user and stores it
 def tweet(userInput):
     startIndex = userInput.find('\"') #the starting index of the tweet message
@@ -108,6 +114,8 @@ def processClientRequests(data):
         return response
     elif request_type == "tweet.....":
         response = tweet(message)
+    elif request_type == "get_users.":
+        response = sendUserList()
     else:
         response = "what" #change
     return response

@@ -98,9 +98,24 @@ def login(username):
         user = User(username)
         print("username legal, connection established.")
 
+#sends the tweet request to the server
 def sendTweet(userInput):
     message = "tweet....." + username + userInput
     clientSocket.send(message.encode())
+    response = clientSocket.recv(1024)
+    response = response.decode()
+    print(response)
+
+#gets the list of all online users from the server
+def getUsers():
+    message = "get_users."
+    clientSocket.send(message.encode())
+    response = clientSocket.recv(1024)
+    response = response.decode()
+    listOfOnlineUsers = response.split(" ")
+    for user in listOfOnlineUsers:
+        print(str(user))
+    listOfOnlineUsers = [] #does this qualify as "clearing from client memory" ??
     
 
 #logs out the user
@@ -129,7 +144,7 @@ def listen():
         elif userInput == "timeline":
             pass
         elif userInput == "getusers":
-            pass
+            getUsers()
         elif userInput == "gettweets":
             pass
         else:
