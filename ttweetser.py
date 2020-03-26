@@ -52,13 +52,11 @@ def deleteUser(username):
             if user.get_username() == username:
                 break
         onlineUsers.remove(user)
-        print("users online: " + str(len(onlineUsers))) #delete later
-        ##
-        ##
-        #TODO: remove this user's messages from tweets list
-        ##
-        ##
-        ##
+        
+        #delete the user's messages from the tweets list
+        for tweet in tweets:
+            if tweet.get_username() == username:
+                tweets.remove(tweet)
     except:
         print("oops")
         pass
