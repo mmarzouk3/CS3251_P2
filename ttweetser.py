@@ -140,26 +140,27 @@ def client_thread(connectionSocket):
 #-----MAIN SERVER CODE---------
 #------------------------------
 #command line arg parsing and error checks
-if not len(sys.argv) == 2:
-    exitGracefully(1)
-else:
-    portArg = sys.argv[1]
-    checkInput(portArg)
+if __name__ == "__main__":
+    if not len(sys.argv) == 2:
+        exitGracefully(1)
+    else:
+        portArg = sys.argv[1]
+        checkInput(portArg)
 
-serverPort = int(portArg)
+    serverPort = int(portArg)
 
-#This creates the server socket for the TCP connection.
-serverSocket = socket(AF_INET, SOCK_STREAM)
-#binding server socket to localhost and the user-inputted port
-serverSocket.bind(('', serverPort))
-serverSocket.listen()
-print('The server is ready to receive...')
+    #This creates the server socket for the TCP connection.
+    serverSocket = socket(AF_INET, SOCK_STREAM)
+    #binding server socket to localhost and the user-inputted port
+    serverSocket.bind(('', serverPort))
+    serverSocket.listen()
+    print('The server is ready to receive...')
 
-#This loop keeps the server live for continous listening.
-while True:
-    #blocking call, waits to accept a connection
-    connectionSocket, addr = serverSocket.accept()
-    #opens a connection for the new client
-    start_new_thread(client_thread, (connectionSocket,))
+    #This loop keeps the server live for continous listening.
+    while True:
+        #blocking call, waits to accept a connection
+        connectionSocket, addr = serverSocket.accept()
+        #opens a connection for the new client
+        start_new_thread(client_thread, (connectionSocket,))
 
-serverSocket.close()
+    serverSocket.close()
