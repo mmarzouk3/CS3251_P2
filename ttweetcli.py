@@ -104,7 +104,8 @@ def sendTweet(userInput):
     clientSocket.send(message.encode())
     response = clientSocket.recv(1024)
     response = response.decode()
-    print(response)
+    if response != 'success':
+        print(response)
 
 #gets the list of all online users from the server
 def getUsers():
@@ -122,7 +123,6 @@ def getUsers():
 def logout(username):
     message = "logout...." + username
     clientSocket.send(message.encode()) #it's a logout request
-    
     clientSocket.close()
     connected == False
     print("bye bye")

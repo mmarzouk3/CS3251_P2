@@ -94,6 +94,7 @@ def tweet(userInput):
 
                         #Store tweet
                         tweets.append(userMessage)
+                        return 'success' #all's well
 
 #processes the client's requests
 #The first 10 characters are reserved to
