@@ -86,7 +86,7 @@ def checkPortValid(input_):
 def login(username):
     #the message contains the request type + the client's username to be checked
     message = "check_user" + username
-    clientSocket.send(message.encode()) 
+    clientSocket.send(message.encode())
 
     #receive response from server
     response = clientSocket.recv(1024)
@@ -117,7 +117,7 @@ def getUsers():
     for user in listOfOnlineUsers:
         print(str(user))
     listOfOnlineUsers = [] #does this qualify as "clearing from client memory" ??
-    
+
 
 #logs out the user
 def logout(username):
@@ -128,6 +128,20 @@ def logout(username):
     print("bye bye")
     sys.exit()
 
+def subscribe(tag):
+    message = "sub......." + tag + ";" + username
+    clientSocket.send(message.encode())
+    response = clientSocket.recv(1024)
+    response = response.decode()
+    print(response)
+
+def unsubscribe(tag):
+    message = "unsub....." + tag + ";" + username
+    clientSocket.send(message.encode())
+    response = clientSocket.recv(1024)
+    response = response.decode()
+    print(response)
+
 #listens for commands from the user
 #"pass" is just there temporarily until functionality is implemented
 def listen():
@@ -137,10 +151,10 @@ def listen():
             logout(username)
         elif userInput[:5] == "tweet":
             sendTweet(userInput[5:])
-        elif userInput == "subscribe":
-            pass
-        elif userInput == "unsubscribe":
-            pass
+        elif userInput[:9] == "subscribe":
+            subscribe(userInput[9:])
+        elif userInput[:11] == "unsubscribe":
+            unsubscribe(userInput[11:])
         elif userInput == "timeline":
             pass
         elif userInput == "getusers":
@@ -167,7 +181,7 @@ else:
 clientSocket = socket(AF_INET, SOCK_STREAM)
 
 #If the following doesn't work, there must be a problem
-#with the ip address, server port, or both. Inform the 
+#with the ip address, server port, or both. Inform the
 #user and exit gracefully.
 
 #try:
