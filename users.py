@@ -12,18 +12,21 @@ class User:
     # This function takes in a string tag and subscribes the user to the hastag
     # if their hastag subscribe has not hit 3 yet
     def subscribe_hashtag(self, tag):
-        if len(self.sub_hashtag < 3):
+        if len(self.sub_hashtag) < 3:
             if not tag in self.sub_hashtag:
-                self.sub_hashtag.add(tag)
+                self.sub_hashtag.append(tag)
+                print(self.sub_hashtag)
                 return "operation success" #message as per pdf guidelines
+            else:
+                return "already subscribed"
         else:
             return "operation failed: sub " +  tag + " failed, already exists or exceeds 3 limitation"
 
     # This function takes in a string tag and removes it from the user's
     # subscribed hashtags
     def remove_hashtag(self, tag):
-        if tag in sub_hashtag:
-            self.sub_hashtag.remove()
+        if tag in self.sub_hashtag:
+            self.sub_hashtag.remove(tag)
             return "operation success"
         else:
             return "You are not subscribed to this hashtag bub"

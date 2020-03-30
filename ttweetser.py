@@ -52,7 +52,7 @@ def deleteUser(username):
             if user.get_username() == username:
                 break
         onlineUsers.remove(user)
-        
+
         #delete the user's messages from the tweets list
         for tweet in tweets:
             if tweet.get_username() == username:
@@ -113,6 +113,25 @@ def tweet(userInput):
                         tweets.append(userMessage)
                         return 'success' #all's well
 
+def subscribeToTag(message):
+    tag = message.split(";")[0]
+    username = message.split(";")[1]
+
+    for user in onlineUsers:
+        if user.username == username:
+            break
+    return user.subscribe_hashtag(tag)
+
+def unsubscribeToTag(message):
+    tag = message.split(";")[0]
+    username = message.split(";")[1]
+
+    for user in onlineUsers:
+        if user.username == username:
+            break
+    return user.remove_hashtag(tag)
+
+
 #processes the client's requests
 #The first 10 characters are reserved to
 #indicate the request type; the 10th char
@@ -138,6 +157,11 @@ def processClientRequests(data):
         username = message
         response = sendTweetsList(username)
         return response
+
+    elif request_type == "sub.......":
+        response = subscribeToTag(message)
+    elif request_type == "unsub.....":
+        response = unsubscribeToTag(message)
     else:
         response = "what" #change
     return response
