@@ -67,6 +67,23 @@ def sendUserList():
         response += str(user.get_username()) + " " #usernames separated by spaces
     return response
 
+def sendTweetsList(username):
+    # if the user exists, first character in response will be 1
+    # else first character will be 0
+    for user in onlineUsers:
+        if user.username == username:
+            response = '1'
+            for message in user.messages:
+                # message guaranteed to not have " character so we will use
+                # this to separate full messages
+                # hashtags are alphanumeric so we will split the tweet and hashtag
+                # using @ symbol
+                response += message.tweet + '@#' + "#".join(message.hashtags) + '"'
+            return response
+    # the requested username is not logged on
+    response = "0no user " + username + " in the system"
+    return response
+
 #parses the tweet information from the user and stores it
 def tweet(userInput):
     startIndex = userInput.find('\"') #the starting index of the tweet message
@@ -117,6 +134,10 @@ def processClientRequests(data):
         response = tweet(message)
     elif request_type == "get_users.":
         response = sendUserList()
+    elif request_type == "get_tweets":
+        username = message
+        response = sendTweetsList(username)
+        return response
     else:
         response = "what" #change
     return response

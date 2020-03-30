@@ -117,6 +117,25 @@ def getUsers():
     for user in listOfOnlineUsers:
         print(str(user))
     listOfOnlineUsers = [] #does this qualify as "clearing from client memory" ??
+
+def getTweets(username):
+    message = "get_tweets" + username
+    clientSocket.send(message.encode())
+    response = clientSocket.recv(1024)
+    response = response.decode()
+
+    # first character in response indicates success status
+    if response[0] == '0':
+        # error, just print response
+        print(response[1:])
+    else:
+        # success
+        response = response[1:]
+        # reponse in form:
+        for tweet in response.split('"'):
+            if tweet:
+                (msg, hashtag) = tweet.rsplit("@", 1)
+                print(username + ': "' + msg + '" ' + hashtag)
     
 
 #logs out the user
@@ -145,8 +164,8 @@ def listen():
             pass
         elif userInput == "getusers":
             getUsers()
-        elif userInput == "gettweets":
-            pass
+        elif userInput[:9] == "gettweets":
+            getTweets(userInput[10:])
         else:
             print("Not a recognized command. Try again.")
 
