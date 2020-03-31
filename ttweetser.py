@@ -5,9 +5,12 @@
 from socket import *
 from _thread import start_new_thread
 import sys
+import pickle
 
 from users import User
 from messages import Message
+from request import Method
+from response import Response, Status
 
 # list of User objects
 onlineUsers = []
@@ -19,7 +22,7 @@ tweets = []
 def checkInput(input_):
     pass #(remove later)
     #if something
-        #exitGracefully()
+    #exitGracefully()
 
 #checks whether the username is valid (i.e. not taken)
 def notTaken(username):
@@ -33,16 +36,16 @@ def loginUserIfValid(username):
     #add it to the list of online users if the username is valid
     if notTaken(username):
         onlineUsers.append(User(username))
-        response = "valid"
+        status = Status.OK
     else:
-        response = "invalid"
-    return response
+        status = Status.ERROR
+    return Response(status)
 
 #prints an error message and exits gracefully
 #error 1 = too many arguments
 def exitGracefully(errorType):
     #if error is blah
-        #print message
+    #print message
     sys.exit()
 
 #delete the user account and all associated messages
@@ -62,26 +65,21 @@ def deleteUser(username):
         pass
 
 def sendUserList():
-    response = ''
+    userList = []
     for user in onlineUsers:
-        response += str(user.get_username()) + " " #usernames separated by spaces
-    return response
+        userList.append(user.username)
+    return Response(Status.OK, userList)
 
 def sendTweetsList(username):
     # if the user exists, first character in response will be 1
     # else first character will be 0
     for user in onlineUsers:
         if user.username == username:
-            response = '1'
-            for message in user.messages:
-                # message guaranteed to not have " character so we will use
-                # this to separate full messages
-                # hashtags are alphanumeric so we will split the tweet and hashtag
-                # using @ symbol
-                response += message.tweet + '@#' + "#".join(message.hashtags) + '"'
+            response = Response(Status.OK, user.messages)
             return response
+
     # the requested username is not logged on
-    response = "0no user " + username + " in the system"
+    response = Response(Status.ERROR, "no user " + username + " in the system")
     return response
 
 #parses the tweet information from the user and stores it
@@ -94,14 +92,14 @@ def tweet(userInput):
         if startIndex != -1 and endIndex != -1: #i.e. both quotes were found
             tweetMessage = userInput[startIndex + 1: endIndex]
             if len(tweetMessage) < 1 or len(tweetMessage) > 150:
-                return "message length illegal, connection refused."
+                return Response(Status.ERROR, "message length illegal, connection refused.")
             else:
                 if startIndexHash != -1: #hashtags found
                     hashtags = userInput[startIndexHash + 1:]
                     hashtagList = hashtags.split("#")
                     for hashtag in hashtagList:
                         if not hashtag.isalnum() or len(hashtag) < 1:
-                            return "hashtag illegal format, connection refused."
+                            return Response(Status.ERROR, "hashtag illegal format, connection refused.")
                     else:
                         #Store message in the user's profile
                         userMessage = Message(tweetMessage, username, hashtagList)
@@ -111,76 +109,64 @@ def tweet(userInput):
 
                         #Store tweet
                         tweets.append(userMessage)
-                        return 'success' #all's well
 
-def subscribeToTag(message):
-    tag = message.split(";")[0]
-    username = message.split(";")[1]
+                        return Response(Status.OK) #all's well
 
+def subscribeToTag(tag, username):
     for user in onlineUsers:
         if user.username == username:
             break
-    return user.subscribe_hashtag(tag)
+    return Response(Status.OK, user.subscribe_hashtag(tag))
 
-def unsubscribeToTag(message):
-    tag = message.split(";")[0]
-    username = message.split(";")[1]
-
+def unsubscribeToTag(tag, username):
     for user in onlineUsers:
         if user.username == username:
             break
-    return user.remove_hashtag(tag)
+    return Response(Status.OK, user.remove_hashtag(tag))
 
 
 #processes the client's requests
 #The first 10 characters are reserved to
 #indicate the request type; the 10th char
 #onwards contains the actual client message
-def processClientRequests(data):
-    request_type = data[:10] #first 10 characters reserved for request type
-    message = data[10:] #10th character onwards is the actual client data
-    print(request_type + message) #delete later
-    if request_type == "check_user":
-        username = message
-        response = loginUserIfValid(username)
-        return response
-    elif request_type == "logout....":
-        username = message
-        deleteUser(username)
-        response = "logged_out"
-        return response
-    elif request_type == "tweet.....":
-        response = tweet(message)
-    elif request_type == "get_users.":
+def processClientRequests(request):
+    if request.method == Method.CHECK_USER:
+        # login request will have username in the body
+        response = loginUserIfValid(request.body)
+    elif request.method == Method.LOGOUT:
+        # logout request will have username in body
+        deleteUser(request.body)
+        response = Response(Status.OK, "logged_out")
+    elif request.method == Method.TWEET:
+        response = tweet(request.body)
+    elif request.method == Method.SUB:
+        response = subscribeToTag(request.body[0], request.body[1])
+    elif request.method == Method.UNSUB:
+        response = unsubscribeToTag(request.body[0], request.body[1])
+    elif request.method == Method.GET_USERS:
         response = sendUserList()
-    elif request_type == "get_tweets":
-        username = message
-        response = sendTweetsList(username)
-        return response
-
-    elif request_type == "sub.......":
-        response = subscribeToTag(message)
-    elif request_type == "unsub.....":
-        response = unsubscribeToTag(message)
+    elif request.method == Method.GET_TWEETS:
+        response = sendTweetsList(request.body)
     else:
-        response = "what" #change
+        response = Response(Status.ERROR, "unrecognized request")
+
     return response
 
 #creates a thread for the new client trying to log in
 def client_thread(connectionSocket):
     connected = True
     while connected:
-        data = connectionSocket.recv(1024)
-        data = data.decode()
-        if not data:
+        request = connectionSocket.recv(1024)
+        request = pickle.loads(request)
+        if not request:
             break
-        reply = processClientRequests(data)
-        if reply == 'logged_out':
+        reply = processClientRequests(request)
+        if reply.body == 'logged_out':
             connectionSocket.close()
             connected = False
         else:
             if reply:
-                connectionSocket.sendall(reply.encode())
+                connectionSocket.sendall(pickle.dumps(reply))
 
 #------------------------------
 #-----MAIN SERVER CODE---------

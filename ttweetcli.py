@@ -5,9 +5,12 @@
 from socket import *
 import sys
 import time
+import pickle
 
 from users import User
 from messages import Message
+from request import Request, Method
+from response import Status
 
 #client changes this to False when they want to close the conxn
 global connected
@@ -85,80 +88,73 @@ def checkPortValid(input_):
 #logs in the user
 def login(username):
     #the message contains the request type + the client's username to be checked
-    message = "check_user" + username
-    clientSocket.send(message.encode())
+    request = Request(Method.CHECK_USER, username)
+    clientSocket.send(pickle.dumps(request))
 
     #receive response from server
     response = clientSocket.recv(1024)
-    response = response.decode()
-    if response == "invalid":
+    response = pickle.loads(response)
+    if response.status == Status.ERROR:
         #the username is already taken; inform the user and exit
         exitGracefully(4)
-    if response == "valid":
+    else:
         user = User(username)
         print("username legal, connection established.")
 
 #sends the tweet request to the server
 def sendTweet(userInput):
-    message = "tweet....." + username + userInput
-    clientSocket.send(message.encode())
+    request = Request(Method.TWEET, username + userInput)
+    clientSocket.send(pickle.dumps(request))
     response = clientSocket.recv(1024)
-    response = response.decode()
-    if response != 'success':
-        print(response)
+    response = pickle.loads(response)
+    if response.status == Status.ERROR:
+        print(response.body)
 
 #gets the list of all online users from the server
 def getUsers():
-    message = "get_users."
-    clientSocket.send(message.encode())
+    request = Request(Method.GET_USERS)
+    clientSocket.send(pickle.dumps(request))
     response = clientSocket.recv(1024)
-    response = response.decode()
-    listOfOnlineUsers = response.split(" ")
+    response = pickle.loads(response)
+    listOfOnlineUsers = response.body
     for user in listOfOnlineUsers:
-        print(str(user))
-    listOfOnlineUsers = [] #does this qualify as "clearing from client memory" ??
+        print(user)
 
 def getTweets(username):
-    message = "get_tweets" + username
-    clientSocket.send(message.encode())
+    request = Request(Method.GET_TWEETS, username)
+    clientSocket.send(pickle.dumps(request))
     response = clientSocket.recv(1024)
-    response = response.decode()
+    response = pickle.loads(response)
 
-    # first character in response indicates success status
-    if response[0] == '0':
-        # error, just print response
-        print(response[1:])
+    if response.status == Status.ERROR:
+        print(response.body)
     else:
-        # success
-        response = response[1:]
-        # reponse in form:
-        for tweet in response.split('"'):
-            if tweet:
-                (msg, hashtag) = tweet.rsplit("@", 1)
-                print(username + ': "' + msg + '" ' + hashtag)
+        messages = response.body
+        for msg in messages:
+            print(str(msg))
 
 #logs out the user
 def logout(username):
-    message = "logout...." + username
-    clientSocket.send(message.encode()) #it's a logout request
+    request = Request(Method.LOGOUT, username)
+    clientSocket.send(pickle.dumps(request)) #it's a logout request
     clientSocket.close()
     connected == False
     print("bye bye")
     sys.exit()
 
 def subscribe(tag):
-    message = "sub......." + tag + ";" + username
-    clientSocket.send(message.encode())
+    request = Request(Method.SUB, [tag, username])
+    clientSocket.send(pickle.dumps(request))
     response = clientSocket.recv(1024)
-    response = response.decode()
-    print(response)
+    response = pickle.loads(response)
+    print(response.body)
 
 def unsubscribe(tag):
-    message = "unsub....." + tag + ";" + username
-    clientSocket.send(message.encode())
+    request = Request(Method.UNSUB, [tag, username])
+    clientSocket.send(pickle.dumps(request))
     response = clientSocket.recv(1024)
-    response = response.decode()
-    print(response)
+    response = pickle.loads(response)
+    print(response.body)
 
 #listens for commands from the user
 #"pass" is just there temporarily until functionality is implemented

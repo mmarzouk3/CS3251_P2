@@ -20,3 +20,6 @@ class Message:
 
     def get_hashtags(self):
         return self.hashtags
+
+    def __str__(self):
+        return self.username + ': "' + self.tweet + '" #' + '#'.join(self.hashtags)
