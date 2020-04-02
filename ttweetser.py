@@ -74,43 +74,22 @@ def sendTweetsList(username):
     # if the user exists, first character in response will be 1
     # else first character will be 0
     for user in onlineUsers:
-        if user.username == username:
-            response = Response(Status.OK, user.messages)
+        if user.get_username() == username:
+            response = Response(Status.OK, user.get_messages())
             return response
 
     # the requested username is not logged on
     response = Response(Status.ERROR, "no user " + username + " in the system")
     return response
 
-#parses the tweet information from the user and stores it
-def tweet(userInput):
-    startIndex = userInput.find('\"') #the starting index of the tweet message
-    startIndexHash = userInput.find('#') #the starting index of the hashtags
-    username = userInput[:startIndex - 1]
-    if startIndex != -1: #i.e. if the first quote was found
-        endIndex = userInput.find('\"', startIndex + 1)
-        if startIndex != -1 and endIndex != -1: #i.e. both quotes were found
-            tweetMessage = userInput[startIndex + 1: endIndex]
-            if len(tweetMessage) < 1 or len(tweetMessage) > 150:
-                return Response(Status.ERROR, "message length illegal, connection refused.")
-            else:
-                if startIndexHash != -1: #hashtags found
-                    hashtags = userInput[startIndexHash + 1:]
-                    hashtagList = hashtags.split("#")
-                    for hashtag in hashtagList:
-                        if not hashtag.isalnum() or len(hashtag) < 1:
-                            return Response(Status.ERROR, "hashtag illegal format, connection refused.")
-                    else:
-                        #Store message in the user's profile
-                        userMessage = Message(tweetMessage, username, hashtagList)
-                        for user in onlineUsers:
-                            if user.get_username() == username:
-                                user.add_tweets(userMessage)
+#adds the new tweet to both the tweeter's profile and to the list of tweets
+def tweet(userMessage):
+    for user in onlineUsers:
+        if user.get_username() == userMessage.get_username():
+            user.add_tweets(userMessage)
 
-                        #Store tweet
-                        tweets.append(userMessage)
-
-                        return Response(Status.OK) #all's well
+    tweets.append(userMessage)
+    return Response(Status.OK) #all's well
 
 def subscribeToTag(tag, username):
     for user in onlineUsers:

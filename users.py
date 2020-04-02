@@ -44,5 +44,5 @@ class User:
         return self.sub_hashtag
 
     def get_messages(self):
-        return self.get_messages
+        return self.messages
 

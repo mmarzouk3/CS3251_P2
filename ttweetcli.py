@@ -57,7 +57,7 @@ def checkInput(serverIP, serverPort, username):
     if len(octets) == 4:
         for i in octets:
             #ip octet out of range
-            if int(i) < 0 or int(i) > 255:
+            if i == '' or int(i) < 0 or int(i) > 255:
                 exitGracefully(1)
     else:
         exitGracefully(1)
@@ -101,14 +101,32 @@ def login(username):
         user = User(username)
         print("username legal, connection established.")
 
-#sends the tweet request to the server
+#checks the tweet and sends it to the server if it's valid
 def sendTweet(userInput):
-    request = Request(Method.TWEET, username + userInput)
-    clientSocket.send(pickle.dumps(request))
-    response = clientSocket.recv(1024)
-    response = pickle.loads(response)
-    if response.status == Status.ERROR:
-        print(response.body)
+    startIndex = userInput.find('\"') #the starting index of the tweet message
+    startIndexHash = userInput.find('#') #the starting index of the hashtags
+    if startIndex != -1: #i.e. if the first quote was found
+        endIndex = userInput.find('\"', startIndex + 1)
+        if startIndex != -1 and endIndex != -1: #i.e. both quotes were found
+            tweetMessage = userInput[startIndex + 1: endIndex]
+            if len(tweetMessage) < 1 or len(tweetMessage) > 150:
+                print("message length illegal, connection refused.")
+            else:
+                if startIndexHash != -1: #hashtags found
+                    hashtags = userInput[startIndexHash + 1:]
+                    hashtagList = hashtags.split("#")
+                    for hashtag in hashtagList:
+                        if not hashtag.isalnum() or len(hashtag) < 1:
+                            print("hashtag illegal format, connection refused.")
+                    else:
+                        #Send the tweet to the server
+                        userTweet = Message(tweetMessage, username, hashtagList)
+                        request = Request(Method.TWEET, userTweet)
+                        clientSocket.send(pickle.dumps(request))
+                        response = clientSocket.recv(1024)
+                        response = pickle.loads(response)
+                        if response.status == Status.ERROR:
+                            print(response.body)
 
 #gets the list of all online users from the server
 def getUsers():
