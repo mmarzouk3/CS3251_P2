@@ -87,6 +87,8 @@ def tweet(userMessage):
     for user in onlineUsers:
         if user.get_username() == userMessage.get_username():
             user.add_tweets(userMessage)
+        if user.has_subscription(userMessage.get_hashtags()):
+            user.add_to_timeline(userMessage)
 
     tweets.append(userMessage)
     return Response(Status.OK) #all's well
@@ -103,6 +105,10 @@ def unsubscribeToTag(tag, username):
             break
     return Response(Status.OK, user.remove_hashtag(tag))
 
+def sendTimeline(username):
+    for user in onlineUsers:
+        if user.username == username:
+                return Response(Status.OK, user.timelineMessages)
 
 #processes the client's requests
 #The first 10 characters are reserved to
@@ -126,6 +132,8 @@ def processClientRequests(request):
         response = sendUserList()
     elif request.method == Method.GET_TWEETS:
         response = sendTweetsList(request.body)
+    elif request.method == Method.TIMELINE:
+        response = sendTimeline(request.body)
     else:
         response = Response(Status.ERROR, "unrecognized request")
 
@@ -136,9 +144,9 @@ def client_thread(connectionSocket):
     connected = True
     while connected:
         request = connectionSocket.recv(1024)
-        request = pickle.loads(request)
         if not request:
             break
+        request = pickle.loads(request)
         reply = processClientRequests(request)
         if reply.body == 'logged_out':
             connectionSocket.close()

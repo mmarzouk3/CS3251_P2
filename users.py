@@ -9,6 +9,9 @@ class User:
         # messages is a list of Message objects
         self.messages = []
 
+        # list of timeline messages
+        self.timelineMessages = []
+
     # This function takes in a string tag and subscribes the user to the hastag
     # if their hastag subscribe has not hit 3 yet
     def subscribe_hashtag(self, tag):
@@ -31,10 +34,23 @@ class User:
         else:
             return "You are not subscribed to this hashtag bub"
 
+    def has_subscription(self, tags):
+        if "ALL" in self.sub_hashtag:
+            return True
+
+        for tag in tags:
+            if tag in self.sub_hashtag:
+                print("user: " + self.username + "has subscription: " + tag)
+                return True
+        return False
+
     # Make sure that everything in tweet is of object Message
     # This function will add a single Message object to the list of Messages
     def add_tweets(self, tweet):
         self.messages.append(tweet)
+
+    def add_to_timeline(self, tweet):
+        self.timelineMessages.append(tweet)
 
     #Get functions or we can delete this and just use the attributes either is fine
     def get_username(self):

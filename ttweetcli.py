@@ -174,6 +174,17 @@ def unsubscribe(tag):
     response = pickle.loads(response)
     print(response.body)
 
+def getTimeline():
+    request = Request(Method.TIMELINE, username)
+    clientSocket.send(pickle.dumps(request))
+    response = clientSocket.recv(1024)
+
+    if response:
+        response = pickle.loads(response)
+        messages = response.body
+        for tweet in messages:
+            print(str(tweet))
+
 #listens for commands from the user
 #"pass" is just there temporarily until functionality is implemented
 def listen():
@@ -184,11 +195,11 @@ def listen():
         elif userInput[:5] == "tweet":
             sendTweet(userInput[5:])
         elif userInput[:9] == "subscribe":
-            subscribe(userInput[9:])
+            subscribe(userInput[11:])
         elif userInput[:11] == "unsubscribe":
-            unsubscribe(userInput[11:])
+            unsubscribe(userInput[13:])
         elif userInput == "timeline":
-            pass
+            getTimeline()
         elif userInput == "getusers":
             getUsers()
         elif userInput[:9] == "gettweets":
