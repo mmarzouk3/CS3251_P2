@@ -143,8 +143,7 @@ def getUsers():
 def getTweets(username):
     request = Request(Method.GET_TWEETS, username)
     clientSocket.send(pickle.dumps(request))
-    response = clientSocket.recv(1024)
-    response = pickle.loads(response)
+    response = getResponse()
 
     if response.status == Status.ERROR:
         print(response.body)
@@ -179,13 +178,28 @@ def unsubscribe(tag):
 def getTimeline():
     request = Request(Method.TIMELINE, username)
     clientSocket.send(pickle.dumps(request))
-    response = clientSocket.recv(1024)
+    response = getResponse()
 
-    if response:
-        response = pickle.loads(response)
-        messages = response.body
-        for tweet in messages:
-            print(str(tweet))
+    messages = response.body
+    for tweet in messages:
+        print(str(tweet))
+
+# block until we get the response from the server
+def getResponse():
+    responseData = b''
+
+    while True:
+        data = clientSocket.recv(1024)
+        responseData += data
+
+        try:
+            response = pickle.loads(responseData)
+            break
+        except:
+            # still need more data to load the pickle object
+            continue
+
+    return response
 
 #listens for commands from the user
 #"pass" is just there temporarily until functionality is implemented
