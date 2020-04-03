@@ -21,18 +21,21 @@ class User:
                 print(self.sub_hashtag)
                 return "operation success" #message as per pdf guidelines
             else:
-                return "already subscribed"
+                return "operation failed: sub " +  tag + " failed, already exists or exceeds 3 limitation"
         else:
             return "operation failed: sub " +  tag + " failed, already exists or exceeds 3 limitation"
 
     # This function takes in a string tag and removes it from the user's
     # subscribed hashtags
     def remove_hashtag(self, tag):
+        if tag == "ALL":
+            self.sub_hashtag.clear() #delete all subbed hashtags
+            return "operation success"
         if tag in self.sub_hashtag:
             self.sub_hashtag.remove(tag)
             return "operation success"
         else:
-            return "You are not subscribed to this hashtag bub"
+            return "operation success" #pdf states "no effect", i.e it counts as a success?
 
     def has_subscription(self, tags):
         if "ALL" in self.sub_hashtag:
