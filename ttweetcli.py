@@ -104,7 +104,7 @@ def login(username):
 #checks the tweet and sends it to the server if it's valid
 def sendTweet(userInput):
     startIndex = userInput.find('\"') #the starting index of the tweet message
-    startIndexHash = userInput.find('#') #the starting index of the hashtags
+    #startIndexHash = userInput.find('#') #the starting index of the hashtags
     if startIndex != -1: #i.e. if the first quote was found
         endIndex = userInput.find('\"', startIndex + 1)
         if startIndex != -1 and endIndex != -1: #i.e. both quotes were found
@@ -112,8 +112,10 @@ def sendTweet(userInput):
             if len(tweetMessage) < 1 or len(tweetMessage) > 150:
                 print("message length illegal, connection refused.")
             else:
+                hashPart = userInput[endIndex:] #search for hashtag after the tweet message
+                startIndexHash = hashPart.find('#') #the starting index of the hashtags
                 if startIndexHash != -1: #hashtags found
-                    hashtags = userInput[startIndexHash + 1:]
+                    hashtags = hashPart[startIndexHash + 1:]
                     hashtagList = hashtags.split("#")
                     for hashtag in hashtagList:
                         if not hashtag.isalnum() or len(hashtag) < 1:
