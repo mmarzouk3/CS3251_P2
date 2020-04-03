@@ -109,7 +109,9 @@ def sendTweet(userInput):
         endIndex = userInput.find('\"', startIndex + 1)
         if startIndex != -1 and endIndex != -1: #i.e. both quotes were found
             tweetMessage = userInput[startIndex + 1: endIndex]
-            if len(tweetMessage) < 1 or len(tweetMessage) > 150:
+            if len(tweetMessage) < 1:
+                print("message format illegal.")
+            if len(tweetMessage) > 150:
                 print("message length illegal, connection refused.")
             else:
                 hashPart = userInput[endIndex:] #search for hashtag after the tweet message
