@@ -17,6 +17,7 @@ To avoid the issue of IO blocking, the server keeps track of timeline messages f
 Then, when the user invokes the timeline command, the server sends over the relevant messages.
 
 ###Division of Labor:  
+Work was allocated equally between all team members.  
 ---Weixi handled subscribe/unsubscribe, implemented the user & message data structures, and designed the user and message objects.  
 ---Mariam handled the multiple-client functionality (multi-threading), logging on/off, and tweeting.  
 ---Kelly handled implementing pickle, gettweets, timeline, and desgined request/response objects for use with pickle. 
