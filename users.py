@@ -43,7 +43,7 @@ class User:
 
         for tag in tags:
             if tag in self.sub_hashtag:
-                print("user: " + self.username + "has subscription: " + tag)
+                #print("user: " + self.username + "has subscription: " + tag)
                 return True
         return False
 

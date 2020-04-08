@@ -21,5 +21,8 @@ class Message:
     def get_hashtags(self):
         return self.hashtags
 
+    def get_tweet_broadcast_format(self):
+        return self.username + ' "' + self.tweet + '" #' + '#'.join(self.hashtags)
+
     def __str__(self):
         return self.username + ': "' + self.tweet + '" #' + '#'.join(self.hashtags)

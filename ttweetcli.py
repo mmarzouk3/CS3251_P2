@@ -3,6 +3,7 @@
 #Disclaimer / citation: The class textbook templates were referenced.
 
 from socket import *
+import threading
 import sys
 import time
 import pickle
@@ -14,7 +15,6 @@ from response import Status
 
 #client changes this to False when they want to close the conxn
 global connected
-
 
 #prints an error message and exits gracefully
 #errorType is the error code, the data field is optional
@@ -99,6 +99,10 @@ def login(username):
         exitGracefully(4)
     else:
         user = User(username)
+        assignedPort = response.body
+        if assignedPort:
+            daemon = threading.Thread(target=daemon_listener, args=[assignedPort], daemon=True)
+            daemon.start()
         print("username legal, connection established.")
 
 #checks the tweet and sends it to the server if it's valid
@@ -225,6 +229,28 @@ def listen():
         else:
             print("Not a recognized command. Try again.")
 
+#a daemon that listens for tweets from the server
+#with hashtags that the client has subbed to
+def daemon_listener(assignedPort):
+    daemonSocket = socket(AF_INET, SOCK_STREAM)
+    daemonSocket.bind(('', assignedPort))
+    daemonSocket.listen()
+
+    #This loop keeps the daemon live for continous listening.
+    while True:
+        #blocking call, waits to accept a connection
+        conxnSocket, addr = daemonSocket.accept()
+        response = conxnSocket.recv(1024)
+        if not response:
+            break
+        response = pickle.loads(response)
+        if response.method == Method.TWEET:
+            print(response.body)
+    daemonSocket.close()
+    
+
+    
+
 #------------------------------
 #-----MAIN CLIENT CODE---------
 #------------------------------
@@ -249,6 +275,7 @@ clientSocket = socket(AF_INET, SOCK_STREAM)
 connected = True
 clientSocket.connect((serverIP, serverPort))
 login(username)
+
 #listens for commands typed in by the user
 listen()
 

@@ -2,14 +2,17 @@
 #Authors: Weixi Li, Mariam Marzouk, Kelly McMaster
 #Disclaimer / citation: The class textbook templates were referenced.
 
+import time
 from socket import *
+import _thread
 from _thread import start_new_thread
+import threading
 import sys
 import pickle
 
 from users import User
 from messages import Message
-from request import Method
+from request import Request, Method
 from response import Response, Status
 
 # list of User objects
@@ -17,6 +20,9 @@ onlineUsers = []
 
 # list of Message Objects
 tweets = []
+
+# dictionary mapping client threads to their dameon port numbers
+daemonPorts = {}
 
 #checks whether user input is valid
 def checkInput(input_):
@@ -31,15 +37,22 @@ def notTaken(username):
             return False
     return True
 
+
 #logs the user in if the username is valid
 def loginUserIfValid(username):
+
     #add it to the list of online users if the username is valid
     if notTaken(username):
         onlineUsers.append(User(username))
         status = Status.OK
     else:
         status = Status.ERROR
-    return Response(status)
+
+    #map a dameon port to this client thread
+    port = 20000 + len(onlineUsers) 
+    daemonPorts[username] = port
+
+    return Response(status, port)
 
 #prints an error message and exits gracefully
 #error 1 = too many arguments
@@ -84,14 +97,17 @@ def sendTweetsList(username):
 
 #adds the new tweet to both the tweeter's profile and to the list of tweets
 def tweet(userMessage):
+    response = Response(Status.OK)
     for user in onlineUsers:
         if user.get_username() == userMessage.get_username():
             user.add_tweets(userMessage)
         if user.has_subscription(userMessage.get_hashtags()):
             user.add_to_timeline(userMessage)
+            
+    startDaemonThread(userMessage) #activate daemon
 
     tweets.append(userMessage)
-    return Response(Status.OK) #all's well
+    return response
 
 def subscribeToTag(tag, username):
     for user in onlineUsers:
@@ -155,6 +171,29 @@ def client_thread(connectionSocket):
             if reply:
                 connectionSocket.sendall(pickle.dumps(reply))
 
+def startDaemonThread(message):
+    #while True:
+    #the broadcasting dameon that sends out tweets to subbed clients
+    daemon = threading.Thread(target=daemon_broadcaster, args=[message], daemon=True)
+    daemon.start()
+
+
+#a daemon that broadcasts tweets to subbed clients
+def daemon_broadcaster(broadcastMessage):
+
+    if broadcastMessage is None:
+        pass
+    else:
+        for user in onlineUsers:
+            if user.has_subscription(broadcastMessage.get_hashtags()):
+                daemonSocket = socket(AF_INET, SOCK_STREAM)
+                port = daemonPorts[user.get_username()]
+                daemonSocket.connect(('', port))
+                strToSend = broadcastMessage.get_tweet_broadcast_format()
+                request = Request(Method.TWEET, strToSend)
+                daemonSocket.send(pickle.dumps(request))
+                daemonSocket.close()
+
 #------------------------------
 #-----MAIN SERVER CODE---------
 #------------------------------
@@ -180,6 +219,6 @@ if __name__ == "__main__":
         #blocking call, waits to accept a connection
         connectionSocket, addr = serverSocket.accept()
         #opens a connection for the new client
-        start_new_thread(client_thread, (connectionSocket,))
+        clientThreadID = start_new_thread(client_thread, (connectionSocket,))
 
     serverSocket.close()
