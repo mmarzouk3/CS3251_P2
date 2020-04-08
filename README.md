@@ -40,5 +40,7 @@ Work was allocated equally between all team members.
 
 ###Dependencies:
 All 3rd party libraries used are standard; we did not have to specifically install anything extra.
-For pickle to work, make sure your python version is >= 3.6.
+For pickle to work, make sure your python version is >= 3.6.  
+One thing to note: make sure that request.py, response.py, messages.py, and users.py are all in the  
+same directory as ttweetcli.py and ttweetser.py, since those files are used to run the programs. 
 
